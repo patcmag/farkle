@@ -3,6 +3,7 @@
 import sys
 import random
 import return_score
+import validate_roll
 
 # MAIN GAME    
 
@@ -44,15 +45,23 @@ while True:
     dice_keep = raw_input('\n\nwhich dice will you keep? \n(separate by spaces)\t').strip()
     dk = dice_keep.split(' ')
 
-    #this is the ID of the die, not the roll/value
-    available_dice_id = [str(x) for x in [1,2,3,4,5,6]]
+    #create list of rolled values for this roll
+    #to be used to tabulate score for this roll
+    scoreList = [dice_dict[die] for die in dk] 
 
-    #data validation - input
-    for die in dk:
-        if die in available_dice_id:
-            continue
-        else:
-            print 'not a possible roll'
+    scoreList_IsValid = validate_roll.isValid([str(s) for s in scoreList])
+    if scoreList_IsValid == False:
+        print 'choose new dice to keep'
+
+    #this is the ID of the die, not the roll/value
+    # available_dice_id = [str(x) for x in [1,2,3,4,5,6]]
+
+    # #data validation - input
+    # for die in dk:
+    #     if die in available_dice_id:
+    #         continue
+    #     else:
+    #         print 'not a possible roll'
 
     #need more data validation
     #rolls must be a 1s, 5s, 3 of a kind [and other special rolls]
@@ -61,9 +70,7 @@ while True:
     turn_dice_dict = dice_dict
     score = 0
 
-    #create list of rolled values for this roll
-    #to be used to tabulate score for this roll
-    score_list = [dice_dict[die] for die in dk] 
+
                     
     print '\nyou chose\n'
     for die in dk:
@@ -71,8 +78,8 @@ while True:
         del turn_dice_dict[die] #reduce available dice to roll for this turn
     
     print '\nyou have ' + str(len(turn_dice_dict)) + ' remaining dice'
-    print '\nyour score will be calculated from these values:   ' + str(score_list)
-    print '\nyour score is:\t' + str(return_score.return_score(score_list)) 
+    print '\nyour score will be calculated from these values:   ' + str(scoreList)
+    print '\nyour score is:\t' + str(return_score.return_score(scoreList)) 
     #print '\nyour score will be calculated from ' + str(return_score(score_list)) + ' separate values'
 
 
