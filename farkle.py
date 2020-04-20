@@ -4,83 +4,118 @@ import sys
 import random
 import return_score
 import validate_roll
+import subprocess as sp
+
 
 # MAIN GAME    
 
 print 'welcome to farkle v1\n'
-while True:
-    # this doesn't work
-    # usr_in = input( '\nhit enter to roll dice\nq to exit\t')
-    # if usr_in == 'q': sys.exit
-    # elif len(usr_in)>0: break
-    # else: continue 
 
-    try:
-        input( '\nhit enter to roll dice\t')
-    except SyntaxError:
-        pass
-    
+players = ['p1', 'p2', 'p3']
+playerScores = {'p1':0, 'p2':0, 'p3':0}
 
-    print '\n\ndice rollin...\n\n'
+while True: #game runs until CTRL-C, needs work
+    for player in players: #PLAYER TURN, cycles through p1,p2,p3
+        
+        turnContinues = True
+        activeDice = 6
+        turn_score = 0
 
-    d1 = 0
-    d2 = 0
-    d3 = 0
-    d4 = 0
-    d5 = 0
-    d6 = 0
+        while turnContinues:
+            # print player + ' turn score: ' + str(turn_score)
+            print 'BANKED SCORES'
+            for p in players: print p + ": " + str(playerScores[p]) #print all players' current scores
+            try:
+                input( '\nhit enter to roll dice\t\t' + player + ' score for this turn: ' + str(turn_score))
+            except SyntaxError:
+                pass
 
-    six_dice = [d1,d2,d3,d4,d5,d6]
-    dice_dict = {}
-    #dice_collection = {1:d1,2:d2,3:d3,4:d4,5:d5,6:d6}
+            print '\n\ndice rollin...\n\n'
+            dice = [0]*activeDice
+            dice_dict = {}
 
-    i = 1
-    print 'DIE\tROLL'
-    for die in six_dice:
-        roll = random.randrange(1,6)
-        dice_dict[str(i)] = roll
-        print '[d'+str(i)+']\t'+str(roll)
-        i = i+1
+            i = 1
+            print 'DIE\tROLL'
+            for die in dice:
+                roll = random.randrange(1,6)
+                dice_dict[str(i)] = roll
+                print '[d'+str(i)+']\t'+str(roll)
+                i = i+1
+        
+            # debug troublesome rolls
+            # activeDice = 4
+            # dice_dict = {'1':3,'2':3,'3':4,'4':5}
 
-    dice_keep = raw_input('\n\nwhich dice will you keep? \n(separate by spaces)\t').strip()
-    dk = dice_keep.split(' ')
+            #test if Farkled
+            if validate_roll.farkled([dice_dict[str(j)] for j in range(1,activeDice+1)]):
+                print '* * * F A R K L E * * *'
+                turnContinues = False
+                turn_score = 0
+                continue # back to while True
 
-    #create list of rolled values for this roll
-    #to be used to tabulate score for this roll
-    scoreList = [dice_dict[die] for die in dk] 
+            waitingForValidDice = True
+            while waitingForValidDice:
+                dice_keep = raw_input('\n\n' + player + ', which dice will you keep? \n(separate by spaces)\t').strip()
+                dk = dice_keep.split(' ')
+                #create list of rolled values for this roll
+                #to be used to tabulate score for this roll
+                scoreList = [dice_dict[die] for die in dk] 
+                scoreList_IsValid = validate_roll.isValid([str(s) for s in scoreList])
+                if scoreList_IsValid == False:
+                    print 'not valid, choose new dice to keep'
+                    continue #back to while waitingForValidDice
+                else: waitingForValidDice = False #escape from nested while loop
 
-    scoreList_IsValid = validate_roll.isValid([str(s) for s in scoreList])
-    if scoreList_IsValid == False:
-        print 'choose new dice to keep'
+            turn_dice_dict = dice_dict
 
-    #this is the ID of the die, not the roll/value
-    # available_dice_id = [str(x) for x in [1,2,3,4,5,6]]
+            print '\nyou chose\n'
+            for die in dk:
+                print '[d'+str(die)+']\t'+str(dice_dict[die])
+                del turn_dice_dict[die] #reduce available dice to roll for this turn
 
-    # #data validation - input
-    # for die in dk:
-    #     if die in available_dice_id:
-    #         continue
-    #     else:
-    #         print 'not a possible roll'
+            current_score = return_score.return_score(scoreList)
+            turn_score = turn_score + current_score
+            print 'score for these dice: ' + str(current_score)
+            print 'current score was calculated from these values:   ' + str(scoreList)
 
-    #need more data validation
-    #rolls must be a 1s, 5s, 3 of a kind [and other special rolls]
-    #another function validate_choice()
+            activeDice = len(turn_dice_dict)
+            if activeDice == 0: 
+                print 'you get a fresh set of dice'
+                activeDice = 6
+                # turn_score = turn_score + current_score
+                try:
+                    input( '\nHIT ENTER TO CONTINUE')
+                except SyntaxError: 
+                    pass
+                sp.call('clear',shell=True)
+                continue
+            else:
+                print 'you have ' + str(activeDice) + ' remaining dice'
 
-    turn_dice_dict = dice_dict
-    score = 0
+            waitingForValidChoice = True
+            choice = ''
+            while waitingForValidChoice:
+                choice = raw_input('\n\n' + player + ', continue to roll?\n(yes/no)\t').strip()
+                if choice not in ['yes','no']: 
+                    print 'not a valid response'
+                    continue
+                else: 
+                    waitingForValidChoice = False
+            if choice == 'yes' : 
+                sp.call('clear',shell=True)
+                continue
+            elif choice == 'no': #bank score
+                playerScores[player] = playerScores[player] + turn_score
+                turnContinues = False
 
+        print player + ', your turn score is:\t\t' + str(turn_score) 
+        print player + ', your total score is:\t' + str(playerScores[player]) 
+        #print '\nyour score will be calculated from ' + str(return_score(score_list)) + ' separate values'
 
-                    
-    print '\nyou chose\n'
-    for die in dk:
-        print '[d'+str(die)+']\t'+str(dice_dict[die])
-        del turn_dice_dict[die] #reduce available dice to roll for this turn
-    
-    print '\nyou have ' + str(len(turn_dice_dict)) + ' remaining dice'
-    print '\nyour score will be calculated from these values:   ' + str(scoreList)
-    print '\nyour score is:\t' + str(return_score.return_score(scoreList)) 
-    #print '\nyour score will be calculated from ' + str(return_score(score_list)) + ' separate values'
-
-
+        try:
+            input( '\nHIT ENTER TO CONTINUE')
+        except SyntaxError:
+            pass
+        
+        sp.call('clear',shell=True)
 
