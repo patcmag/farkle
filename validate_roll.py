@@ -32,6 +32,7 @@ def isStraight(faceCount):
 
 def isValid(roll):
     # print 'roll = ' + str(roll)
+    if len(roll)==0: return False
     diceFaces = ['1','2','3','4','5','6']
     for r in roll:
         if r not in diceFaces:
